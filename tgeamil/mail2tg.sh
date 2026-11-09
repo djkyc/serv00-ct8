@@ -661,7 +661,7 @@ return 0
 patch_main_py() {
 echo "给 main.py 打补丁：OAuth 登录 + 兼容轮询（不用 SEARCH/IDLE）+ Telegram 命令"
 if [ ! -f "$DIR/main.py" ]; then echo "没有 $DIR/main.py，先拉代码。"; return 1; fi
-if grep -q "oauth_helper.imap_login" "$DIR/main.py" 2>/dev/null && grep -q "_selected_count" "$DIR/main.py" 2>/dev/null && grep -q "run_command_bot" "$DIR/main.py" 2>/dev/null && grep -q "轮询查新邮件 v3" "$DIR/main.py" 2>/dev/null && grep -q "def cmd_rmmail" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v1" "$DIR/main.py" 2>/dev/null && grep -q "stop_signals=None" "$DIR/main.py" 2>/dev/null && grep -q "loop.run_until_complete(app.bot.set_my_commands" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v2" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v3" "$DIR/main.py" && grep -q "重试提醒只发一次" "$DIR/main.py" && grep -q "Outlook 提示用 microsoft.com/link" "$DIR/main.py" && grep -q "转发识别 Received 头" "$DIR/main.py" && grep -q "排版美化 验证码代码块" "$DIR/main.py" && grep -q "发件人二次解码" "$DIR/main.py" && grep -q "垃圾邮件默认发主聊天" "$DIR/main.py" && grep -q "Serv00/CT8 进机器人向导" "$DIR/main.py" && grep -q "Serv00/CT8 机器人选面板" "$DIR/main.py" && grep -q "TG 菜单面板按钮" "$DIR/main.py" && grep -q "TG 菜单里输密码" "$DIR/main.py" && grep -q "TG 写邮件" "$DIR/main.py" && grep -Fq "_cst = _COMPOSE_STATE.get(cid)" "$DIR/main.py" && grep -q "TG Serv00 绑定新建" "$DIR/main.py" && grep -q "Serv00 默认邮箱账号开头" "$DIR/main.py" && grep -q "Serv00 绑定点左键复制新建" "$DIR/main.py" && grep -q "Serv00 绑定密钥直连" "$DIR/main.py"; then echo "补丁已经打过了，跳过。"; return 0; fi
+if grep -q "oauth_helper.imap_login" "$DIR/main.py" 2>/dev/null && grep -q "_selected_count" "$DIR/main.py" 2>/dev/null && grep -q "run_command_bot" "$DIR/main.py" 2>/dev/null && grep -q "轮询查新邮件 v3" "$DIR/main.py" 2>/dev/null && grep -q "def cmd_rmmail" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v1" "$DIR/main.py" 2>/dev/null && grep -q "stop_signals=None" "$DIR/main.py" 2>/dev/null && grep -q "loop.run_until_complete(app.bot.set_my_commands" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v2" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v3" "$DIR/main.py" && grep -q "重试提醒只发一次" "$DIR/main.py" && grep -q "Outlook 提示用 microsoft.com/link" "$DIR/main.py" && grep -q "转发识别 Received 头" "$DIR/main.py" && grep -q "排版美化 验证码代码块" "$DIR/main.py" && grep -q "发件人二次解码" "$DIR/main.py" && grep -q "垃圾邮件默认发主聊天" "$DIR/main.py" && grep -q "Serv00/CT8 进机器人向导" "$DIR/main.py" && grep -q "Serv00/CT8 机器人选面板" "$DIR/main.py" && grep -q "TG 菜单面板按钮" "$DIR/main.py" && grep -q "TG 菜单里输密码" "$DIR/main.py" && grep -q "TG 写邮件" "$DIR/main.py" && grep -Fq "_cst = _COMPOSE_STATE.get(cid)" "$DIR/main.py" && grep -q "TG Serv00 绑定新建" "$DIR/main.py" && grep -q "Serv00 默认邮箱账号开头" "$DIR/main.py" && grep -q "Serv00 绑定点左键复制新建" "$DIR/main.py" && grep -q "Serv00 绑定密钥直连" "$DIR/main.py" && grep -q "认证失败停轮询" "$DIR/main.py"; then echo "补丁已经打过了，跳过。"; return 0; fi
 local bak="$DIR/main.py.bak.$(date +%Y%m%d%H%M%S)"
 cp "$DIR/main.py" "$bak" || { echo "备份 main.py 失败，补丁没打。"; return 1; }
 if ! python3 - "$DIR" <<'PYEOF'
@@ -3375,6 +3375,58 @@ if "Serv00 绑定密钥直连" not in src:
     if _old_remote32 in src:
         src = src.replace(_old_remote32, _new_remote32, 1)
     src += "\n# Serv00 绑定密钥直连\n"
+# 33) 认证失败停轮询：绑上的邮箱若不存在/密码不对，IMAP 登录一直 AUTHENTICATIONFAILED，
+# 旧逻辑每 5 次就发一次“重试次数达到上限”，无限刷屏。改为：连续认证失败到上限时只发一次
+# “登不上，已暂停检查”，然后停掉该文件夹的监听，不再重试；删掉重绑或修好后再绑。
+if "认证失败停轮询" not in src:
+    _old_set33 = '_REMOVED_MAILBOXES = set()'
+    _new_set33 = '_REMOVED_MAILBOXES = set()\n_AUTH_FAILED_NOTIFIED = set()'
+    if _old_set33 in src:
+        src = src.replace(_old_set33, _new_set33, 1)
+    _old_init33 = '    retry_count = 0\n    limit_notified = False  # 重试提醒只发一次：同一轮故障只通知一次，恢复后才重新通知'
+    _new_init33 = '    retry_count = 0\n    auth_fail_count = 0\n    limit_notified = False  # 重试提醒只发一次：同一轮故障只通知一次，恢复后才重新通知'
+    if _old_init33 in src:
+        src = src.replace(_old_init33, _new_init33, 1)
+    _old_ok33 = '            retry_count = 0\n            limit_notified = False\n        except Exception as e:'
+    _new_ok33 = '            retry_count = 0\n            auth_fail_count = 0\n            limit_notified = False\n        except Exception as e:'
+    if _old_ok33 in src:
+        src = src.replace(_old_ok33, _new_ok33, 1)
+    _old_ex33 = ('        except Exception as e:\n'
+        '            logger.error(f"{email_config[\'EMAIL\']} 的 {folder} 文件夹轮询出错: {e}")\n'
+        '            retry_count += 1')
+    _new_ex33 = ('        except Exception as e:\n'
+        '            logger.error(f"{email_config[\'EMAIL\']} 的 {folder} 文件夹轮询出错: {e}")\n'
+        '            retry_count += 1\n'
+        '            _et33 = str(e)\n'
+        '            if "AUTHENTICATIONFAILED" in _et33 or "Authentication failed" in _et33:\n'
+        '                auth_fail_count += 1\n'
+        '            else:\n'
+        '                auth_fail_count = 0')
+    if _old_ex33 in src:
+        src = src.replace(_old_ex33, _new_ex33, 1)
+    _old_lim33 = ('        if retry_count >= RETRY_LIMIT:\n'
+        '            final_message = f"{email_config[\'EMAIL\']} 的 {folder} 文件夹重试次数达到上限。等待 {RETRY_PAUSE // 60} 分钟后重试。"\n'
+        '            logger.error(final_message)\n'
+        '            asyncio.run(send_telegram_message(final_message))\n'
+        '            _STOP_LISTENERS.wait(RETRY_PAUSE)\n'
+        '            retry_count = 0')
+    _new_lim33 = ('        if retry_count >= RETRY_LIMIT:\n'
+        '            if auth_fail_count >= RETRY_LIMIT:\n'
+        '                _em33 = email_config[\'EMAIL\']\n'
+        '                if _em33 not in _AUTH_FAILED_NOTIFIED:\n'
+        '                    _AUTH_FAILED_NOTIFIED.add(_em33)\n'
+        '                    _msg33 = f"{_em33} 这个邮箱登不上，可能是邮箱不存在或密码不对，已暂停检查，不再重试。\\n删掉这个邮箱，确认没问题再重新绑。"\n'
+        '                    logger.error(_msg33)\n'
+        '                    asyncio.run(send_telegram_message(_msg33))\n'
+        '                return\n'
+        '            final_message = f"{email_config[\'EMAIL\']} 的 {folder} 文件夹重试次数达到上限。等待 {RETRY_PAUSE // 60} 分钟后重试。"\n'
+        '            logger.error(final_message)\n'
+        '            asyncio.run(send_telegram_message(final_message))\n'
+        '            _STOP_LISTENERS.wait(RETRY_PAUSE)\n'
+        '            retry_count = 0')
+    if _old_lim33 in src:
+        src = src.replace(_old_lim33, _new_lim33, 1)
+    src += "\n# 认证失败停轮询\n"
 open(path, "w", encoding="utf-8").write(src)
 print("补丁已打：OAuth 登录 + 兼容轮询 v3（每轮新建连接，SELECT 数信 + FETCH 取信，不用 SEARCH/IDLE）+ Telegram 命令（/ls /show /del /rmmail）+ 机器人内菜单（/menu）+ 命令机器人单 loop + 菜单 v2（文件夹中文名/翻页/绑定向导//help）+ 菜单 v3（邮箱列表/邮件列表 8 封一页、v.cd 进机器人向导、Outlook 提示可点复制）+ 重试提醒只发一次（同一轮故障只通知一次）+ Outlook 提示用 microsoft.com/link + 转发识别 Received 头 + 排版美化 验证码代码块 + 发件人二次解码 + 垃圾邮件默认发主聊天 + Serv00/CT8 进机器人向导 + Serv00/CT8 机器人选面板 + TG 菜单面板按钮 + TG 菜单里输密码 + TG 写邮件")
 PYEOF
