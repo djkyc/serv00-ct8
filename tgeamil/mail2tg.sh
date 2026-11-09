@@ -3450,9 +3450,9 @@ serv00_pick_panel() {
   det=$(detect_serv00_ct8) || det=""
   if [ -n "$det" ]; then
     det_host=${det%%|*}; det=${det#*|}; det_mail=${det%%|*}; det_desc=${det#*|}
-    echo "本机识别到：$det_desc，邮件服务器 $det_host"
+    echo "本机：$det_desc，服务器 $det_host" >&2
     local ans=""
-    read -r -p "直接回车就用这个；想换别的面板/账号就输 m: " ans || true
+    read -r -p "回车用本机，换别的输 m：" ans || true
     if [ -z "$ans" ]; then
       local _num _dom _panel_url
       _num=$(printf '%s' "$det_host" | sed -n 's/^mail\([0-9][0-9]*\)\.serv00\.com$/\1/p')
@@ -3465,34 +3465,34 @@ serv00_pick_panel() {
       return 0
     fi
   else
-    echo "本机认不出是 Serv00/CT8，下面手选面板。"
+    echo "本机不是 Serv00/CT8，请手动选。" >&2
   fi
-  echo "选 Serv00 面板（1-16）或 CT8：输入 1-16 = Serv00 panel<号>；输入 c = CT8。"
+  echo "选面板：Serv00 输 1-16，CT8 输 c。" >&2
   local sel=""
-  read -r -p "输入面板号（1-16 或 c）: " sel || true
+  read -r -p "面板号（1-16 或 c）：" sel || true
   local kind="" num="" host="" user=""
   case "$sel" in
     c|C|ct8|CT8)
       kind="ct8"
-      read -r -p "CT8 s 号（默认 1）: " num || true
+      read -r -p "CT8 服务器号（默认 1）：" num || true
       [ -z "$num" ] && num=1
-      case "$num" in *[!0-9]*|'') echo "s 号不对。"; return 1;; esac
+      case "$num" in *[!0-9]*|'') echo "服务器号不对，输数字。" >&2; return 1;; esac
       host="s${num}.ct8.pl"
       ;;
     ''|*[!0-9]*)
-      echo "面板号不对。"; return 1;;
+      echo "面板号不对，输 1-16 或 c。" >&2; return 1;;
     *)
       kind="serv00"
       num=$((10#$sel))
-      if [ "$num" -lt 1 ] || [ "$num" -gt 16 ]; then echo "面板号要在 1-16 之间。"; return 1; fi
+      if [ "$num" -lt 1 ] || [ "$num" -gt 16 ]; then echo "面板号只能是 1-16。" >&2; return 1; fi
       host="s${num}.serv00.com"
       ;;
   esac
   user=$(whoami 2>/dev/null || echo "${USER:-}")
   local _u=""
-  read -r -p "账号用户名（回车默认 $user）: " _u || true
+  read -r -p "账号名（回车默认 $user）：" _u || true
   [ -n "$_u" ] && user="$_u"
-  [ -n "$user" ] || { echo "账号没填。"; return 1; }
+  [ -n "$user" ] || { echo "账号名没填。" >&2; return 1; }
   local mail_server domain panel_url default_email desc is_local remote_host remote_user
   if [ "$kind" = "serv00" ]; then
     mail_server="mail${num}.serv00.com"
@@ -3529,8 +3529,8 @@ serv00_list_mailboxes() {
   else
     [ -n "${P_S00_REMOTE_HOST:-}" ] && [ -n "${P_S00_REMOTE_USER:-}" ] || return 1
     if [ -z "${P_S00_SSH_PASS:-}" ]; then
-      read -r -p "输入 ${P_S00_REMOTE_USER}@${P_S00_REMOTE_HOST} 的 Serv00 账号密码（SSH 登录用，输完按回车）: " P_S00_SSH_PASS || true
-      echo ""
+      read -s -r -p "输 ${P_S00_REMOTE_HOST} 上账号 ${P_S00_REMOTE_USER} 的登录密码（SSH 用，不显示）：" P_S00_SSH_PASS || true
+      echo "" >&2
       [ -n "$P_S00_SSH_PASS" ] || return 1
     fi
     command -v sshpass >/dev/null 2>&1 || return 1
@@ -3550,14 +3550,14 @@ serv00_pick_mailbox() {
   P_PICKED_EMAIL=""
   local webmail="https://mail.serv00.com/"
   case "$domain" in *.ct8.pl) webmail="https://poczta.ct8.pl/";; esac
-  list=$(serv00_list_mailboxes "$domain" 2>/dev/null) || list=""
+  list=$(serv00_list_mailboxes "$domain") || list=""
   if [ -n "$list" ]; then
-    echo "这个域名下已有的邮箱："
+    echo "已有邮箱："
     printf '%s\n' "$list" | awk '{printf "  %d) %s\n", NR, $0}'
     n=$(printf '%s\n' "$list" | wc -l)
-    echo "面板登录：$panel_url（改密码/新建邮箱在面板里做）；邮箱登录统一是 $webmail。"
+    echo "面板：$panel_url ；网页邮箱：$webmail"
     local sel=""
-    read -r -p "选一个编号（1-$n），或直接输新邮箱地址新建，或回车取消: " sel || true
+    read -r -p "选编号，或输新地址新建，回车取消：" sel || true
     case "$sel" in
       '') return 1;;
       *[!0-9]*)
@@ -3574,14 +3574,14 @@ serv00_pick_mailbox() {
         echo "编号不对。"; return 1;;
     esac
   else
-    echo "列不出已有邮箱（devil/SSH 不通），直接手输。"
-    echo "面板登录：$panel_url；邮箱登录统一是 $webmail。"
+    echo "列不出已有邮箱，直接输地址。"
+    echo "面板：$panel_url ；网页邮箱：$webmail"
     local email=""
     if [ -n "$guess" ]; then
-      read -r -p "邮箱完整地址（回车默认 $guess）: " email || true
+      read -r -p "邮箱地址（回车默认 $guess）：" email || true
       [ -z "$email" ] && email="$guess"
     else
-      read -r -p "邮箱完整地址: " email || true
+      read -r -p "邮箱地址：" email || true
     fi
     case "$email" in
       *@*.*) P_PICKED_EMAIL="$email"; return 0;;
@@ -3611,23 +3611,20 @@ serv00_mail_ensure() {
   P_PRESET_PASSWORD=""
   local is_local="${P_S00_IS_LOCAL:-1}"
   local remote_host="${P_S00_REMOTE_HOST:-}" remote_user="${P_S00_REMOTE_USER:-}"
-  local panel_hint="面板 ${P_S00_PANEL_URL:-面板 E-mail}（改密码/新建邮箱）"
-  local webmail="https://mail.serv00.com/"
-  case "${email#*@}" in *.ct8.pl) webmail="https://poczta.ct8.pl/";; esac
-  panel_hint="$panel_hint；邮箱登录统一是 $webmail"
+  local panel_hint="面板 ${P_S00_PANEL_URL:-面板 E-mail}"
   if [ "$is_local" -eq 1 ]; then
-    command -v devil >/dev/null 2>&1 || { echo "这台机器没有 devil 命令，改密码/建邮箱请去 $panel_hint 里操作。"; return 1; }
+    command -v devil >/dev/null 2>&1 || { echo "没有 devil 命令，去 $panel_hint 手动改。"; return 1; }
   else
     if ! command -v sshpass >/dev/null 2>&1; then
-      echo "要改别的面板/账号的邮箱密码得 SSH 到 $remote_host，但这台机器没有 sshpass。"
-      echo "请到 $remote_host 上以 $remote_user 登录，跑："
-      echo "  devil mail passwd $email   （已有邮箱改密码）"
-      echo "  devil mail account add $email   （新建邮箱）"
-      echo "改完/建好再回来，密码直接填进机器人。"
+      echo "没有 sshpass，改不了 $remote_host 的邮箱。"
+      echo "去 $remote_host 上以 $remote_user 登录，跑："
+      echo "  devil mail passwd $email   （改密码）"
+      echo "  devil mail account add $email   （新建）"
+      echo "弄好再回来填密码。"
       return 1
     fi
     if [ -z "${P_S00_SSH_PASS:-}" ]; then
-      read -r -p "输入 $remote_user@$remote_host 的 Serv00 账号密码（SSH 登录用，输完按回车）: " P_S00_SSH_PASS || true
+      read -s -r -p "输 $remote_host 上账号 $remote_user 的登录密码（SSH 用，不显示）：" P_S00_SSH_PASS || true
       echo ""
       [ -n "$P_S00_SSH_PASS" ] || { echo "没填密码，跳过。"; return 1; }
     fi
@@ -3641,16 +3638,17 @@ serv00_mail_ensure() {
     if sshpass -p "$P_S00_SSH_PASS" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=15 "$remote_user@$remote_host" devil mail list "$domain" 2>/dev/null | grep -qiF "$email"; then exists=1; fi
   fi
   if [ "$exists" -eq 1 ]; then
-    echo "邮箱 $email 已经存在。"
-    read -r -p "输入这个邮箱的密码（已在面板改好的新密码直接输就行，机器人会先验证能不能登；验证不过再帮你用 devil 改掉；直接回车跳过）: " newpw || true
+    echo "邮箱已存在：$email"
+    read -s -r -p "输邮箱密码（回车跳过，不显示）：" newpw || true
+    echo ""
     [ -n "$newpw" ] || return 1
     # 先验证：密码可能已在面板（Change password）改好，能登就直接用，不用再改。
     if [ -n "${P_HOST:-}" ] && serv00_imap_test "$email" "$newpw" "$P_HOST"; then
-      echo "密码验证通过（已在面板改好或本来就是这个密码），直接用它配机器人。"
+      echo "密码能用，已配好。"
       P_PRESET_PASSWORD="$newpw"
       return 0
     fi
-    echo "这个密码登不上，帮你用 devil 改成它。"
+    echo "登不上，正在改成这个密码…"
     if [ "$is_local" -eq 1 ]; then
       out=$(printf '%s\n%s\n' "$newpw" "$newpw" | devil mail passwd "$email" 2>&1)
     else
@@ -3658,11 +3656,12 @@ serv00_mail_ensure() {
       q_pw=$(printf '%q' "$newpw"); q_email=$(printf '%q' "$email")
       out=$(sshpass -p "$P_S00_SSH_PASS" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=30 "$remote_user@$remote_host" "printf '%s\n%s\n' $q_pw $q_pw | devil mail passwd $q_email" 2>&1)
     fi
-    if [ $? -ne 0 ]; then echo "改密码失败，请去 $panel_hint 手动改。输出：$out"; return 1; fi
-    echo "密码已改好。改完去 $webmail 就能用这个邮箱登录了。"
+    if [ $? -ne 0 ]; then echo "改密码失败，去 $panel_hint 手动改。$out"; return 1; fi
+    echo "密码已改好。"
   else
-    echo "邮箱 $email 还不存在。"
-    read -r -p "要不要现在帮你新建这个邮箱？输入新密码（直接回车跳过，只加到机器人里不建邮箱）: " newpw || true
+    echo "邮箱不存在：$email"
+    read -s -r -p "输新密码来新建邮箱（回车跳过，不显示）：" newpw || true
+    echo ""
     [ -n "$newpw" ] || return 1
     if [ "$is_local" -eq 1 ]; then
       out=$(printf '%s\n%s\n' "$newpw" "$newpw" | devil mail account add "$email" 2>&1)
@@ -3671,8 +3670,8 @@ serv00_mail_ensure() {
       q_pw=$(printf '%q' "$newpw"); q_email=$(printf '%q' "$email")
       out=$(sshpass -p "$P_S00_SSH_PASS" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=30 "$remote_user@$remote_host" "printf '%s\n%s\n' $q_pw $q_pw | devil mail account add $q_email" 2>&1)
     fi
-    if [ $? -ne 0 ]; then echo "新建邮箱失败，请去 $panel_hint 手动建。输出：$out"; return 1; fi
-    echo "邮箱已新建，密码已设好。去 $webmail 就能用这个邮箱登录了。"
+    if [ $? -ne 0 ]; then echo "新建失败，去 $panel_hint 手动建。$out"; return 1; fi
+    echo "已新建，密码已设好。"
   fi
   P_PRESET_PASSWORD="$newpw"
   return 0
@@ -3744,21 +3743,20 @@ esac
 local det det_host det_domain det_panel_url det_mail det_desc det_local det_rhost det_ruser
 det=$(serv00_pick_panel) || { echo "没选对，跳过这一个。"; return 1; }
 det_host=${det%%|*}; det=${det#*|}; det_domain=${det%%|*}; det=${det#*|}; det_panel_url=${det%%|*}; det=${det#*|}; det_mail=${det%%|*}; det=${det#*|}; det_desc=${det%%|*}; det=${det#*|}; det_local=${det%%|*}; det=${det#*|}; det_rhost=${det%%|*}; det_ruser=${det#*|}
-echo "选定：$det_desc"
-echo "邮件服务器：$det_host:993（IMAP SSL；POP3 同主机 995，SMTP 同主机 465，机器人只用 IMAP）"
+echo "已选：$det_desc，服务器 $det_host:993"
 local _wm="https://mail.serv00.com/"
 case "$det_domain" in *.ct8.pl) _wm="https://poczta.ct8.pl/";; esac
-echo "面板登录：$det_panel_url（改密码/新建邮箱在面板里做）；邮箱登录统一是 $_wm"
-echo "下一步会列出 $det_domain 下真实有的邮箱让你选（新建默认给 $det_mail；默认邮箱也可能是 <账号>@ 开头的，比如 cntools 的默认就是 cntools@cntools.serv00.net）。"
+echo "面板：$det_panel_url ；网页邮箱：$_wm"
+echo "下面列出 $det_domain 已有的邮箱，选一个；没有就新建（默认 $det_mail）。"
 if [ "$det_local" = "1" ]; then
-  echo "选完邮箱后会问你要不要直接帮你改密码/新建邮箱（本机 devil 命令，不用再去面板点）。"
+  echo "本机可直接改密码/建邮箱。"
 else
-  echo "这是别的面板/账号（$det_rhost），选完邮箱后会问你要 Serv00 账号密码，用 SSH 过去改密码/新建邮箱。"
+  echo "这是别的机器（$det_rhost），等下要输它账号的登录密码（SSH 用）。"
 fi
 P_HOST="$det_host"; P_PORT="993"; P_SUGGEST_EMAIL="$det_mail"; P_SERV00_CT8=1
 P_S00_DOMAIN="$det_domain"; P_S00_PANEL_URL="$det_panel_url"
 P_S00_IS_LOCAL="$det_local"; P_S00_REMOTE_HOST="$det_rhost"; P_S00_REMOTE_USER="$det_ruser"; P_S00_SSH_PASS=""
-P_HINT="Serv00/CT8 邮箱密码（已用 devil 改好/建好就直接用新密码；不是 Serv00/CT8 账号密码）"
+P_HINT="邮箱密码（不是账号登录密码）"
 ;;
 *) echo "没选对，跳过这一个。"; return 1;;
 esac
@@ -3958,7 +3956,7 @@ mailbox_add() {
     if ! setup_outlook_oauth "$email"; then echo "OAuth 授权没做成，这个邮箱没加。"; return 1; fi
   else
     if [ "${P_SERV00_CT8:-0}" -eq 1 ]; then
-      serv00_mail_ensure "$email" || echo "（密码没改/没建，继续用你接下来输入的密码加到机器人里。）"
+      serv00_mail_ensure "$email" || echo "（没改密码，下面直接输密码加到机器人里。）"
     fi
     echo "提示：$P_HINT"
   fi
@@ -4150,15 +4148,15 @@ continue
 fi
 echo "密码提示：$P_HINT"
 if [ "${P_SERV00_CT8:-0}" -eq 1 ]; then
-  serv00_mail_ensure "$email" || echo "（密码没改/没建，继续用你接下来输入的密码加到机器人里。）"
+  serv00_mail_ensure "$email" || echo "（没改密码，下面直接输密码加到机器人里。）"
 fi
 if [ -n "${P_PRESET_PASSWORD:-}" ]; then
   pw="$P_PRESET_PASSWORD"
-  echo "用刚才改好/建好的新密码加到机器人里，不用再输一遍。"
+  echo "用刚才的新密码，不用再输。"
 elif [ "$P_HOST" = "smtp.mail.v.cd" ]; then
-  read -r -p "客户端凭据（输入时会显示，输完按回车）: " pw || true
+  read -s -r -p "客户端凭据（不显示）：" pw || true
 else
-  read -r -p "密码 / 授权码（输入时会显示，输完按回车）: " pw || true
+  read -s -r -p "密码 / 授权码（不显示）：" pw || true
 fi
 echo ""
 if [ -z "$pw" ]; then echo "密码没填，跳过这一个。"; continue; fi
@@ -4433,7 +4431,7 @@ pause
 0)
 if [ "$UNINSTALLED" -eq 1 ]; then
 echo "退出。已经删除清理了，欢迎再次使用："
-echo "curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && bash ~/mail2tg.sh"
+echo "curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && bash./mail2tg.sh"
 else
 echo -e "退出。以后输入 \033[1;32mtge\033[0m 可再次呼出菜单。"
 fi
