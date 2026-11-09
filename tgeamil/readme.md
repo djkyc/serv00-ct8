@@ -3,7 +3,7 @@
 * (outlook/hotmail建议用转发更好，原因是outlook官方的问题，163邮箱 安全这个也很麻烦 但能免费转接也好图四就是说明如何转。)
 * 
 ```bash
-curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && ./mail2tg.sh
+curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && bash ~/mail2tg.sh
 ```
 ---
 ---
