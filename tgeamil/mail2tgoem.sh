@@ -3487,7 +3487,7 @@ pause
 0)
 if [ "$UNINSTALLED" -eq 1 ]; then
 echo "退出。已经删除清理了，欢迎再次使用："
-echo "curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && ./mail2tg.sh"
+echo "curl -Ls https://raw.githubusercontent.com/djkyc/serv00-ct8/refs/heads/main/tgeamil/mail2tg.sh -o ~/mail2tg.sh && chmod +x ~/mail2tg.sh && bash ~/mail2tg.sh
 else
 echo -e "退出。以后输入 \033[1;32mtge\033[0m 可再次呼出菜单。"
 fi
