@@ -661,7 +661,7 @@ return 0
 patch_main_py() {
 echo "给 main.py 打补丁：OAuth 登录 + 兼容轮询（不用 SEARCH/IDLE）+ Telegram 命令"
 if [ ! -f "$DIR/main.py" ]; then echo "没有 $DIR/main.py，先拉代码。"; return 1; fi
-if grep -q "oauth_helper.imap_login" "$DIR/main.py" 2>/dev/null && grep -q "_selected_count" "$DIR/main.py" 2>/dev/null && grep -q "run_command_bot" "$DIR/main.py" 2>/dev/null && grep -q "轮询查新邮件 v3" "$DIR/main.py" 2>/dev/null && grep -q "def cmd_rmmail" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v1" "$DIR/main.py" 2>/dev/null && grep -q "stop_signals=None" "$DIR/main.py" 2>/dev/null && grep -q "loop.run_until_complete(app.bot.set_my_commands" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v2" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v3" "$DIR/main.py" && grep -q "重试提醒只发一次" "$DIR/main.py" && grep -q "Outlook 提示用 microsoft.com/link" "$DIR/main.py" && grep -q "转发识别 Received 头" "$DIR/main.py" && grep -q "排版美化 验证码代码块" "$DIR/main.py" && grep -q "发件人二次解码" "$DIR/main.py" && grep -q "垃圾邮件默认发主聊天" "$DIR/main.py" && grep -q "Serv00/CT8 进机器人向导" "$DIR/main.py" && grep -q "Serv00/CT8 机器人选面板" "$DIR/main.py" && grep -q "TG 菜单面板按钮" "$DIR/main.py" && grep -q "TG 菜单里输密码" "$DIR/main.py" && grep -q "TG 写邮件" "$DIR/main.py"; then echo "补丁已经打过了，跳过。"; return 0; fi
+if grep -q "oauth_helper.imap_login" "$DIR/main.py" 2>/dev/null && grep -q "_selected_count" "$DIR/main.py" 2>/dev/null && grep -q "run_command_bot" "$DIR/main.py" 2>/dev/null && grep -q "轮询查新邮件 v3" "$DIR/main.py" 2>/dev/null && grep -q "def cmd_rmmail" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v1" "$DIR/main.py" 2>/dev/null && grep -q "stop_signals=None" "$DIR/main.py" 2>/dev/null && grep -q "loop.run_until_complete(app.bot.set_my_commands" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v2" "$DIR/main.py" 2>/dev/null && grep -q "菜单 v3" "$DIR/main.py" && grep -q "重试提醒只发一次" "$DIR/main.py" && grep -q "Outlook 提示用 microsoft.com/link" "$DIR/main.py" && grep -q "转发识别 Received 头" "$DIR/main.py" && grep -q "排版美化 验证码代码块" "$DIR/main.py" && grep -q "发件人二次解码" "$DIR/main.py" && grep -q "垃圾邮件默认发主聊天" "$DIR/main.py" && grep -q "Serv00/CT8 进机器人向导" "$DIR/main.py" && grep -q "Serv00/CT8 机器人选面板" "$DIR/main.py" && grep -q "TG 菜单面板按钮" "$DIR/main.py" && grep -q "TG 菜单里输密码" "$DIR/main.py" && grep -q "TG 写邮件" "$DIR/main.py" && grep -Fq "_cst = _COMPOSE_STATE.get(cid)" "$DIR/main.py" && grep -q "TG Serv00 绑定新建" "$DIR/main.py" && grep -q "Serv00 默认邮箱账号开头" "$DIR/main.py" && grep -q "Serv00 绑定点左键复制新建" "$DIR/main.py" && grep -q "Serv00 绑定密钥直连" "$DIR/main.py"; then echo "补丁已经打过了，跳过。"; return 0; fi
 local bak="$DIR/main.py.bak.$(date +%Y%m%d%H%M%S)"
 cp "$DIR/main.py" "$bak" || { echo "备份 main.py 失败，补丁没打。"; return 1; }
 if ! python3 - "$DIR" <<'PYEOF'
@@ -2620,11 +2620,11 @@ if "Serv00/CT8 机器人选面板" not in src:
             _panel = st["local_panel"]; _user = st.get("local_user", "")
             if _kind == "serv00":
                 st["mail_server"] = f"mail{_panel}.serv00.com"
-                st["default_email"] = f"admin@{_user}.serv00.net"
+                st["default_email"] = f"{_user}@{_user}.serv00.net"
                 _desc = f"Serv00 panel{_panel} 账号 {_user}"
             else:
                 st["mail_server"] = f"s{_panel}.ct8.pl"
-                st["default_email"] = f"admin@{_user}.ct8.pl"
+                st["default_email"] = f"{_user}@{_user}.ct8.pl"
                 _desc = f"CT8 s{_panel} 账号 {_user}"
             st["remote_host"] = ""; st["remote_user"] = ""
             st["step"] = "email"
@@ -2662,13 +2662,13 @@ if "Serv00/CT8 机器人选面板" not in src:
         if st.get("kind") == "ct8":
             _panel = st.get("panel", "1")
             st["mail_server"] = f"s{_panel}.ct8.pl"
-            st["default_email"] = f"admin@{_user}.ct8.pl"
+            st["default_email"] = f"{_user}@{_user}.ct8.pl"
             _desc = f"CT8 s{_panel} 账号 {_user}"
             st["remote_host"] = st["mail_server"]
         else:
             _panel = st.get("panel", "")
             st["mail_server"] = f"mail{_panel}.serv00.com"
-            st["default_email"] = f"admin@{_user}.serv00.net"
+            st["default_email"] = f"{_user}@{_user}.serv00.net"
             _desc = f"Serv00 panel{_panel} 账号 {_user}"
             st["remote_host"] = f"s{_panel}.serv00.com"
         import socket as _sock3, getpass as _gp3
@@ -2769,11 +2769,11 @@ if "TG 菜单面板按钮" not in src:
         _panel = st["local_panel"]; _user = st.get("local_user", "")
         if _kind == "serv00":
             st["mail_server"] = f"mail{_panel}.serv00.com"
-            st["default_email"] = f"admin@{_user}.serv00.net"
+            st["default_email"] = f"{_user}@{_user}.serv00.net"
             _desc = f"Serv00 panel{_panel} 账号 {_user}"
         else:
             st["mail_server"] = f"s{_panel}.ct8.pl"
-            st["default_email"] = f"admin@{_user}.ct8.pl"
+            st["default_email"] = f"{_user}@{_user}.ct8.pl"
             _desc = f"CT8 s{_panel} 账号 {_user}"
         st["remote_host"] = ""; st["remote_user"] = ""
         st["step"] = "email"
@@ -3086,7 +3086,7 @@ async def _cb_compose_send(query, cid):
     # -- on_text：写邮件的 to/subject/body 三步。必须插在绑定向导的 early return 之前，
     # 因为 on_text 没绑定进行中时会直接 return，写邮件的状态要先处理。
     _ontext_anchor25 = '    if cid != str(load_config().TELEGRAM_CHAT_ID):\n        return\n    st = _BIND_STATE.get(cid)'
-    if _ontext_anchor25 in src and '_COMPOSE_STATE.get(cid)' not in src:
+    if _ontext_anchor25 in src and '_cst = _COMPOSE_STATE.get(cid)' not in src:
         _compose_lines = [
             '    if cid != str(load_config().TELEGRAM_CHAT_ID):',
             '        return',
@@ -3122,6 +3122,259 @@ async def _cb_compose_send(query, cid):
     src += "\n# TG 写邮件\n"
     src += "\n# TG 菜单里输密码\n"
     src += "\n# TG 菜单面板按钮\n"
+# -- 补：写邮件 on_text 三步（收件人/主题/正文）。Step 25 里守卫条件写错了：
+# 同一次打补丁先插了 _cb_compose_send（里面就有 _COMPOSE_STATE.get(cid)），
+# 所以 on_text 这段永远插不进去；已打过补丁的 main.py 也要靠这段补上。
+_ontext_anchor25b = '    if cid != str(load_config().TELEGRAM_CHAT_ID):\n        return\n    st = _BIND_STATE.get(cid)'
+if _ontext_anchor25b in src and '_cst = _COMPOSE_STATE.get(cid)' not in src:
+    _compose_lines_b = [
+        '    if cid != str(load_config().TELEGRAM_CHAT_ID):',
+        '        return',
+        '    text = update.message.text.strip()',
+        '    _cst = _COMPOSE_STATE.get(cid)',
+        '    if _cst and _cst.get("step") == "to":',
+        '        if "@" not in text or "." not in text.rsplit("@", 1)[-1]:',
+        '            await update.message.reply_text("收件人地址看起来不对，重新发一下（例如 name@example.com）。")',
+        '            return',
+        '        _cst["to"] = text',
+        '        _cst["step"] = "subject"',
+        '        await update.message.reply_text("主题写什么？直接发一行字，没有主题就发一个空格。")',
+        '        return',
+        '    if _cst and _cst.get("step") == "subject":',
+        '        _cst["subject"] = "" if text.strip() == "" else text',
+        '        _cst["step"] = "body"',
+        '        await update.message.reply_text("正文写什么？直接发，多行也可以，发完我给你预览确认。")',
+        '        return',
+        '    if _cst and _cst.get("step") == "body":',
+        '        _cst["body"] = text',
+        '        _cst["step"] = "confirm"',
+        '        _cfg2 = load_config()',
+        '        _from = _cfg2.EMAILS[_cst.get("idx", 1) - 1].get("EMAIL", "") if _cfg2.EMAILS else ""',
+        '        _preview = "发件：" + _from + "\\n收件：" + _cst["to"] + "\\n主题：" + (_cst["subject"] or "(无主题)") + "\\n\\n" + _cst["body"][:500]',
+        '        await update.message.reply_text(_preview, reply_markup=InlineKeyboardMarkup([',
+        '            [InlineKeyboardButton("✅ 发送", callback_data="compose:send"),',
+        '             InlineKeyboardButton("❌ 取消", callback_data="compose:cancel")]]))',
+        '        return',
+        '    st = _BIND_STATE.get(cid)',
+    ]
+    _compose_steps25b = "\n".join(_compose_lines_b) + "\n"
+    src = src.replace(_ontext_anchor25b, _compose_steps25b, 1)
+# 29) TG Serv00 绑定：yes 用默认 + 不存在就新建（远程 SSH）。
+# 用户反馈：输 admin@robert912.serv00.net 是想新建一个，不是登录；发 yes 应该用默认邮箱；
+# 旧提示把 admin@ 当默认、让人重发一遍地址，写反了。
+if "TG Serv00 绑定新建" not in src:
+    _old_tail29 = "默认邮箱一般是 {st['default_email']}（也可能是 <账号>@ 开头的，比如 cntools 的默认就是 cntools@cntools.serv00.net）。\\n面板登录：{_panel_url}（改密码/新建邮箱在面板里做）；邮箱登录统一是 {_webmail}。\\n请直接发邮箱地址（想用默认的就发这个地址）。"
+    _new_tail29 = "发 yes 用默认邮箱 {st['default_email']}；\\n或者直接发一个邮箱地址，不存在的我会帮你新建。"
+    if _old_tail29 in src:
+        src = src.replace(_old_tail29, _new_tail29)
+    _old_email29 = '    if step == "email":\n        if "@" not in text or "." not in text.rsplit("@", 1)[-1]:'
+    _new_email29 = ('    if step == "email":\n'
+        '        if st.get("default_email") and text.strip().lower() in ("yes", "y", "是", "默认", "用默认"):\n'
+        '            text = st["default_email"]\n'
+        '        if "@" not in text or "." not in text.rsplit("@", 1)[-1]:')
+    if _old_email29 in src:
+        src = src.replace(_old_email29, _new_email29, 1)
+    _old_remote29 = ('    if not _ok:\n'
+        '        _BIND_STATE.pop(str(update.effective_chat.id), None)\n'
+        '        if st.get("provider") == "serv00" and st.get("remote_host"):\n'
+        '            await update.message.reply_text(f"{email} 这个密码登不上，又是别的面板/账号，机器人这边改不了。\\n去服务器上跑 tge，选 11，那里会问你要 {st.get(\'remote_user\')}@{st.get(\'remote_host\')} 的 Serv00 账号密码，用 SSH 过去改。", reply_markup=_menu_keyboard())\n'
+        '        else:\n'
+        '            await update.message.reply_text(f"{email} 这个密码登不上（IMAP 登录失败）。\\n检查一下密码对不对，或者去服务器上跑 tge，选 11，在那里完成。", reply_markup=_menu_keyboard())\n'
+        '        return')
+    _new_remote29 = ('    if not _ok:\n'
+        '        if st.get("provider") == "serv00" and st.get("remote_host"):\n'
+        '            st["mailbox_pw"] = password\n'
+        '            st["step"] = "remote_pw"\n'
+        '            await update.message.reply_text(f"{email} 这个密码登不上。可能是密码不对，也可能是这个邮箱还不存在。\\n要我用 SSH 过去看看吗？发一下 {st.get(\'remote_user\')}@{st.get(\'remote_host\')} 的 Serv00 账号密码（只用这一次，立刻删掉）。\\n如果邮箱不存在，我会用你刚才发的邮箱密码帮你新建；如果已存在，我会用它帮你改密码。\\n不想的话发 取消。")\n'
+        '            return\n'
+        '        _BIND_STATE.pop(str(update.effective_chat.id), None)\n'
+        '        await update.message.reply_text(f"{email} 这个密码登不上（IMAP 登录失败）。\\n检查一下密码对不对，或者去服务器上跑 tge，选 11，在那里完成。", reply_markup=_menu_keyboard())\n'
+        '        return')
+    if _old_remote29 in src:
+        src = src.replace(_old_remote29, _new_remote29, 1)
+    _old_pw29 = '    if step == "password":\n        if not text:\n            await update.message.reply_text("密码没收到，重新发一下。")\n            return\n        await _bind_try_password(update, st, text)\n        return'
+    _new_pw29 = ('    if step == "remote_pw":\n'
+        '        if text.strip().lower() in ("取消", "cancel", "不", "no"):\n'
+        '            _BIND_STATE.pop(cid, None)\n'
+        '            await update.message.reply_text("已取消，没绑。", reply_markup=_menu_keyboard())\n'
+        '            return\n'
+        '        _acct_pw = text\n'
+        '        try:\n'
+        '            await update.message.delete()\n'
+        '        except Exception:\n'
+        '            pass\n'
+        '        _email2 = st.get("email", "")\n'
+        '        _mb_pw = st.get("mailbox_pw", "")\n'
+        '        _rhost = st.get("remote_host", "")\n'
+        '        _ruser = st.get("remote_user", "")\n'
+        '        _srv2 = st.get("mail_server", "")\n'
+        '        _dom2 = _email2.split("@", 1)[-1] if "@" in _email2 else ""\n'
+        '        _ok2 = False\n'
+        '        _err2 = ""\n'
+        '        try:\n'
+        '            import shutil as _sh2, subprocess as _sp2, shlex as _shlex2\n'
+        '            if not _sh2.which("sshpass"):\n'
+        '                _err2 = "这台机器没有 sshpass，SSH 过去改不了。去服务器上跑 tge，选 11。"\n'
+        '            else:\n'
+        '                _lst2 = _sp2.run(["sshpass", "-p", _acct_pw, "ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=15", f"{_ruser}@{_rhost}", "devil", "mail", "list", _dom2], capture_output=True, text=True, timeout=30)\n'
+        '                _exists2 = _email2.lower() in (_lst2.stdout + _lst2.stderr).lower()\n'
+        '                _action2 = "passwd" if _exists2 else "account add"\n'
+        '                _rcmd2 = f"printf \'%s\\\\n%s\\\\n\' {_shlex2.quote(_mb_pw)} {_shlex2.quote(_mb_pw)} | devil mail {_action2} {_shlex2.quote(_email2)}"\n'
+        '                _r2 = _sp2.run(["sshpass", "-p", _acct_pw, "ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=30", f"{_ruser}@{_rhost}", _rcmd2], capture_output=True, text=True, timeout=60)\n'
+        '                if _r2.returncode == 0:\n'
+        '                    import imaplib as _imap2\n'
+        '                    try:\n'
+        '                        _m2 = _imap2.IMAP4_SSL(_srv2, 993, timeout=15)\n'
+        '                        _m2.login(_email2, _mb_pw)\n'
+        '                        _m2.logout()\n'
+        '                        _ok2 = True\n'
+        '                    except Exception as _e2:\n'
+        '                        _err2 = f"SSH 过去改了/建了，但 IMAP 还是登不上：{_e2}"\n'
+        '                else:\n'
+        '                    _err2 = f"SSH 过去 devil 没成功：{(_r2.stdout + _r2.stderr).strip()[:200]}"\n'
+        '        except Exception as _e2:\n'
+        '            _err2 = f"SSH 过去出错：{_e2}"\n'
+        '        if not _ok2:\n'
+        '            _BIND_STATE.pop(cid, None)\n'
+        '            await update.message.reply_text(f"{_email2} 还是没绑上。{_err2}\\n去服务器上跑 tge，选 11，在那里完成。", reply_markup=_menu_keyboard())\n'
+        '            return\n'
+        '        import config as _cfg2\n'
+        '        _emails2 = list(getattr(_cfg2, "EMAILS", []) or [])\n'
+        '        _keymap2 = {"email": "EMAIL", "password": "PASSWORD", "imap_server": "IMAP_SERVER", "imap_port": "IMAP_SERVER_PORT", "use_oauth": "USE_OAUTH", "client_id": "OAUTH_CLIENT_ID", "tenant": "OAUTH_TENANT"}\n'
+        '        _norm2 = []\n'
+        '        for _e2 in _emails2:\n'
+        '            _ne2 = {}\n'
+        '            for _k2, _v2 in _e2.items():\n'
+        '                _ne2[_keymap2.get(_k2, _k2)] = _v2\n'
+        '            _norm2.append(_ne2)\n'
+        '        _emails2 = _norm2\n'
+        '        _entry2 = {"EMAIL": _email2, "PASSWORD": _mb_pw, "IMAP_SERVER": _srv2, "IMAP_SERVER_PORT": 993, "USE_OAUTH": False, "OAUTH_CLIENT_ID": st.get("client_id", ""), "OAUTH_TENANT": "consumers"}\n'
+        '        _emails2 = [e for e in _emails2 if e.get("EMAIL") != _email2]\n'
+        '        _emails2.append(_entry2)\n'
+        '        try:\n'
+        '            _rewrite_config_py(_emails2)\n'
+        '        except Exception as _e2:\n'
+        '            _BIND_STATE.pop(cid, None)\n'
+        '            await update.message.reply_text(f"密码验证通过了，但写 config.py 失败：{_e2}。去服务器上跑 tge，选 12 手动加。", reply_markup=_menu_keyboard())\n'
+        '            return\n'
+        '        _BIND_STATE.pop(cid, None)\n'
+        '        await update.message.reply_text(f"绑定完成：{_email2}（{_bind_provider_name(st.get(\'provider\', \'serv00\'))}）。\\n已写进机器人配置，下轮轮询（1 分钟内）就开始收它的信。", reply_markup=_menu_keyboard())\n'
+        '        return\n'
+        + _old_pw29)
+    if _old_pw29 in src:
+        src = src.replace(_old_pw29, _new_pw29, 1)
+    src += "\n# TG Serv00 绑定新建\n"
+# 30) Serv00 默认邮箱改成 <账号>@<账号>.serv00.net / .ct8.pl（不再猜 admin@）。
+# 用户反馈：robert912 的默认是 robert912@robert912.serv00.net，admin@ 是新建用的；
+# cntools/djkyc 的默认也都是 <账号>@ 开头，只有 djbadboy 的默认是 admin@。
+# default_email 只影响“发 yes 用默认”那一下，admin@ 仍可直接输入新建。
+if "Serv00 默认邮箱账号开头" not in src:
+    src = src.replace('f"admin@{_user}.serv00.net"', 'f"{_user}@{_user}.serv00.net"')
+    src = src.replace('f"admin@{_user}.ct8.pl"', 'f"{_user}@{_user}.ct8.pl"')
+    src += "\n# Serv00 默认邮箱账号开头\n"
+# 31) Serv00 绑定：提示点左键复制默认/新建邮箱 + 粘贴新建地址自动建好。
+# 用户反馈：1) 提示要写成“发 yes 用默认邮箱 <code>robert912@...</code>；或者新建 <code>admin@...</code>”，
+# 点邮箱就能复制；2) 粘贴 admin@ 回车后，机器人要自动在后台建好，再提示输密码（不要先拿错密码去登一遍）。
+if "Serv00 绑定点左键复制新建" not in src:
+    # -- admin_email：default_email 旁边一起记（6 处），缩进跟原行走。
+    import re as _re31
+    def _add_admin31(m):
+        _ind = m.group(1)
+        _line = m.group(0)
+        _adm = _line.replace('default_email', 'admin_email')
+        _adm = _adm.replace('"{_user}@{_user}', '"admin@{_user}')
+        return _line + "\n" + _ind + _adm[len(_ind):]
+    src = _re31.sub(r'^([ ]*)st\["default_email"\] = f"\{_user\}@\{_user\}\.(serv00\.net|ct8\.pl)"', _add_admin31, src, flags=_re31.M)
+    # -- _cb_edit 支持 parse_mode（点左键复制要 HTML）。
+    _old_cbedit = "async def _cb_edit(query, text, markup=None):\n    try:\n        await query.edit_message_text(text, reply_markup=markup)"
+    _new_cbedit = "async def _cb_edit(query, text, markup=None, parse_mode=None):\n    try:\n        await query.edit_message_text(text, reply_markup=markup, parse_mode=parse_mode)"
+    if _old_cbedit in src:
+        src = src.replace(_old_cbedit, _new_cbedit, 1)
+    # -- 提示改成两个可复制邮箱（3 处：按钮本机 / 文本本机 / 文本选定）。
+    _old_tail31 = "发 yes 用默认邮箱 {st['default_email']}；\\n或者直接发一个邮箱地址，不存在的我会帮你新建。"
+    _new_tail31 = "发 yes 用默认邮箱 <code>{st['default_email']}</code>；\\n或者新建 <code>{st['admin_email']}</code>。"
+    if _old_tail31 in src:
+        src = src.replace(_old_tail31, _new_tail31)
+    # -- 给三处提示加上 parse_mode="HTML"（用新提示尾巴做锚，只改 Serv00 提示）。
+    _old_cb31 = '或者新建 <code>{st[\'admin_email\']}</code>。", InlineKeyboardMarkup([[InlineKeyboardButton("❌ 取消", callback_data="bind:cancel")]]))'
+    _new_cb31 = '或者新建 <code>{st[\'admin_email\']}</code>。", InlineKeyboardMarkup([[InlineKeyboardButton("❌ 取消", callback_data="bind:cancel")]]), parse_mode="HTML")'
+    if _old_cb31 in src:
+        src = src.replace(_old_cb31, _new_cb31, 1)
+    _old_tx31 = '或者新建 <code>{st[\'admin_email\']}</code>。")'
+    _new_tx31 = '或者新建 <code>{st[\'admin_email\']}</code>。", parse_mode="HTML")'
+    if _old_tx31 in src:
+        src = src.replace(_old_tx31, _new_tx31)
+    # -- email 步：非默认 Serv00 地址 = 新建，记 create_new，密码提示改成新建口径。
+    _old_email31 = '        st["email"] = text\n        if st["provider"] == "custom":'
+    _new_email31 = ('        st["email"] = text\n'
+        '        if st.get("provider") == "serv00" and st.get("default_email") and text.lower() != st["default_email"].lower():\n'
+        '            st["create_new"] = True\n'
+        '        if st["provider"] == "custom":')
+    if _old_email31 in src:
+        src = src.replace(_old_email31, _new_email31, 1)
+    _old_pwmsg31 = '            await update.message.reply_text("最后一步：直接发这个邮箱的密码/授权码。\\n收到后我立刻删掉这条消息，不留记录；先拿它试 IMAP 登录，能登就直接完成绑定。\\n（Outlook 授权码走设备码，不用这步。）")'
+    _new_pwmsg31 = ('            if st.get("create_new"):\n'
+        '                await update.message.reply_text("这个邮箱不存在，我帮你新建。直接发这个新邮箱的密码，收到后我立刻删掉这条消息。")\n'
+        '            else:\n'
+        '                await update.message.reply_text("最后一步：直接发这个邮箱的密码/授权码。\\n收到后我立刻删掉这条消息，不留记录；先拿它试 IMAP 登录，能登就直接完成绑定。\\n（Outlook 授权码走设备码，不用这步。）")')
+    if _old_pwmsg31 in src:
+        src = src.replace(_old_pwmsg31, _new_pwmsg31, 1)
+    # -- _bind_try_password：create_new 时跳过 IMAP 登录，直接走新建（本地 devil / 远程问账号密码）。
+    _old_ok31 = "    _ok = _imap_ok(server, email, password)\n    _changed = False"
+    _new_ok31 = ("    _ok = False\n"
+        "    if not st.get(\"create_new\"):\n"
+        "        _ok = _imap_ok(server, email, password)\n"
+        "    _changed = False")
+    if _old_ok31 in src:
+        src = src.replace(_old_ok31, _new_ok31, 1)
+    src += "\n# Serv00 绑定点左键复制新建\n"
+# 32) Serv00 绑定密钥直连全自动：远程面板先试 SSH 密钥（s13 机器人密钥已加到远端 authorized_keys），
+# 通了直接 devil 建/改邮箱，不用账号密码；密钥不通才问账号密码走老路。
+# 另改提示：收邮箱时认领“我收到邮箱 …”，新建时发“我现在新建邮箱中....等待”。
+if "Serv00 绑定密钥直连" not in src:
+    _old_pwmsg32 = '            if st.get("create_new"):\n                await update.message.reply_text("这个邮箱不存在，我帮你新建。直接发这个新邮箱的密码，收到后我立刻删掉这条消息。")'
+    _new_pwmsg32 = '            if st.get("create_new"):\n                await update.message.reply_text(f"我收到邮箱 {st[\'email\']}。这个邮箱不存在，我帮你新建。直接发这个新邮箱的密码，收到后我立刻删掉这条消息。")'
+    if _old_pwmsg32 in src:
+        src = src.replace(_old_pwmsg32, _new_pwmsg32, 1)
+    _old_local32 = '        if not _is_remote:\n            import shutil as _shutil, subprocess as _sp'
+    _new_local32 = '        if not _is_remote:\n            if st.get("create_new"):\n                await update.message.reply_text("我现在新建邮箱中....等待")\n            import shutil as _shutil, subprocess as _sp'
+    if _old_local32 in src:
+        src = src.replace(_old_local32, _new_local32, 1)
+    _old_remote32 = ('    if not _ok:\n'
+        '        if st.get("provider") == "serv00" and st.get("remote_host"):\n'
+        '            st["mailbox_pw"] = password\n'
+        '            st["step"] = "remote_pw"\n'
+        '            await update.message.reply_text(f"{email} 这个密码登不上。可能是密码不对，也可能是这个邮箱还不存在。\\n要我用 SSH 过去看看吗？发一下 {st.get(\'remote_user\')}@{st.get(\'remote_host\')} 的 Serv00 账号密码（只用这一次，立刻删掉）。\\n如果邮箱不存在，我会用你刚才发的邮箱密码帮你新建；如果已存在，我会用它帮你改密码。\\n不想的话发 取消。")\n'
+        '            return')
+    _new_remote32 = ('    if not _ok and st.get("provider") == "serv00" and st.get("remote_host"):\n'
+        '        _rhost32 = st.get("remote_host", "")\n'
+        '        _ruser32 = st.get("remote_user", "")\n'
+        '        _srv32 = st.get("mail_server", "")\n'
+        '        _dom32 = email.split("@", 1)[-1] if "@" in email else ""\n'
+        '        try:\n'
+        '            import subprocess as _sp32, shlex as _shlex32\n'
+        '            _lst32 = _sp32.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=15", f"{_ruser32}@{_rhost32}", "devil", "mail", "list", _dom32], capture_output=True, text=True, timeout=30)\n'
+        '            if _lst32.returncode == 0:\n'
+        '                _exists32 = email.lower() in (_lst32.stdout + _lst32.stderr).lower()\n'
+        '                _action32 = "passwd" if _exists32 else "account add"\n'
+        '                if st.get("create_new"):\n'
+        '                    await update.message.reply_text("我现在新建邮箱中....等待")\n'
+        '                _rcmd32 = f"printf \'%s\\\\n%s\\\\n\' {_shlex32.quote(password)} {_shlex32.quote(password)} | devil mail {_action32} {_shlex32.quote(email)}"\n'
+        '                _r32 = _sp32.run(["ssh", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "LogLevel=ERROR", "-o", "ConnectTimeout=30", f"{_ruser32}@{_rhost32}", _rcmd32], capture_output=True, text=True, timeout=60)\n'
+        '                if _r32.returncode == 0:\n'
+        '                    _ok = _imap_ok(_srv32, email, password)\n'
+        '                    _changed = True\n'
+        '        except Exception:\n'
+        '            pass\n'
+        '    if not _ok:\n'
+        '        if st.get("provider") == "serv00" and st.get("remote_host"):\n'
+        '            st["mailbox_pw"] = password\n'
+        '            st["step"] = "remote_pw"\n'
+        '            await update.message.reply_text(f"密钥直连没通，我建不了这个邮箱。发一下 {st.get(\'remote_user\')}@{st.get(\'remote_host\')} 的 Serv00 账号密码（只用这一次，立刻删掉），我用账号密码 SSH 过去建。\\n如果邮箱不存在，我会用你刚才发的邮箱密码帮你新建；如果已存在，我会用它帮你改密码。\\n不想的话发 取消。")\n'
+        '            return')
+    if _old_remote32 in src:
+        src = src.replace(_old_remote32, _new_remote32, 1)
+    src += "\n# Serv00 绑定密钥直连\n"
 open(path, "w", encoding="utf-8").write(src)
 print("补丁已打：OAuth 登录 + 兼容轮询 v3（每轮新建连接，SELECT 数信 + FETCH 取信，不用 SEARCH/IDLE）+ Telegram 命令（/ls /show /del /rmmail）+ 机器人内菜单（/menu）+ 命令机器人单 loop + 菜单 v2（文件夹中文名/翻页/绑定向导//help）+ 菜单 v3（邮箱列表/邮件列表 8 封一页、v.cd 进机器人向导、Outlook 提示可点复制）+ 重试提醒只发一次（同一轮故障只通知一次）+ Outlook 提示用 microsoft.com/link + 转发识别 Received 头 + 排版美化 验证码代码块 + 发件人二次解码 + 垃圾邮件默认发主聊天 + Serv00/CT8 进机器人向导 + Serv00/CT8 机器人选面板 + TG 菜单面板按钮 + TG 菜单里输密码 + TG 写邮件")
 PYEOF
@@ -3135,8 +3388,8 @@ echo "补丁后 main.py 语法检查没过，已恢复备份，补丁没打。"
 cp "$bak" "$DIR/main.py" 2>/dev/null || true
 return 1
 fi
-if [ "$(grep -c "oauth_helper.imap_login" "$DIR/main.py")" -ne 3 ] || grep -q "server.login(email_config\['EMAIL'\], email_config\['PASSWORD'\])" "$DIR/main.py"; then
-echo "补丁后核对没过（应有 3 处新登录：监听、轮询、命令各 1 处，0 处旧登录），已恢复备份。"
+if [ "$(grep -c "oauth_helper.imap_login" "$DIR/main.py")" -ne 4 ] || grep -q "server.login(email_config\['EMAIL'\], email_config\['PASSWORD'\])" "$DIR/main.py"; then
+echo "补丁后核对没过（应有 4 处新登录：监听、轮询、命令、写邮件存已发送各 1 处，0 处旧登录），已恢复备份。"
 cp "$bak" "$DIR/main.py" 2>/dev/null || true
 return 1
 fi
@@ -3498,13 +3751,13 @@ serv00_pick_panel() {
     mail_server="mail${num}.serv00.com"
     domain="${user}.serv00.net"
     panel_url="https://panel${num}.serv00.com/login/"
-    default_email="admin@${user}.serv00.net"
+    default_email="${user}@${user}.serv00.net"
     desc="Serv00 panel${num} 账号 ${user}"
   else
     mail_server="$host"
     domain="${user}.ct8.pl"
     panel_url="https://panel.ct8.pl/"
-    default_email="admin@${user}.ct8.pl"
+    default_email="${user}@${user}.ct8.pl"
     desc="CT8 s${num} 账号 ${user}"
   fi
   local myhost myuser
